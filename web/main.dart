@@ -30,21 +30,14 @@ Future<Null> main() async {
   var paredeData = resourceManager.getBitmapData("parede");
   var chaoData = resourceManager.getBitmapData("chao");
   var playerData = resourceManager.getBitmapData("player");
+
   
   var logo = Sprite();
   var m1 = mapa1();
-  var mapa = makeMatrix(30, 30);
-  for (var i = 0; i < m1.length; i++) {
-    for(var j = 0; j < m1[i].length; j++){
-          if(m1[i][j] == "X"){
-            mapa[i][j] = (Parede(paredeData, stage, j*32+720, i*32));
-          }
-          else if(m1[i][j] == "C"){
-            mapa[i][j] = (Parede(chaoData, stage, j*32+720, i*32));
-          }
-    }
-  }
-  Player player = Player(playerData, stage, 720, 32);
+    Mapa mapa = Mapa(m1, paredeData, chaoData, stage);
+  mapa.draw();
+  Player player = Player(playerData, stage, 720, 32, mapa);
+
   player.mouseCursor = MouseCursor.POINTER;
   // See more examples:
   // https://github.com/bp74/StageXL_Samples
@@ -96,35 +89,115 @@ class Parede {
 
 class Player extends Sprite{
   Stage stage;
-  Player(playerData, this.stage, posX, posY){
+  Point posicao = Point(1,  0);
+  Mapa mapa;
+  Player(playerData, this.stage, posX, posY, map){
     this.addChild(Bitmap (playerData));
     this.x = posX;
     this.y = posY;
     window.onKeyUp.listen(_onKeyUp);
-
+    this.mapa = map;
     this.desenha();
   }
   void desenha(){
+    this.mapa.isWall(this.posicao);
     stage.addChild(this);
   }
     void _onKeyUp(var ke) {
     switch(ke.keyCode){
       case ARROW_LEFT:
-        this.x -= 32;
+        this.posicao.y -= 1;
+        print(this.posicao);
+        if(!this.mapa.isWall(this.posicao) && !this.mapa.checkBorder(this.posicao)){
+            this.x -= 32;
+        }else{
+          this.posicao.y +=1;
+        }
         break;
+
+
       case ARROW_UP:
-        this.y -= 32;
+        this.posicao.x -= 1;
+        if(!this.mapa.isWall(this.posicao) && !this.mapa.checkBorder(this.posicao)){
+            this.y -= 32;
+        }else{
+          this.posicao.x +=1;
+        }
         break;
+
+
       case ARROW_RIGHT:
-        this.x += 32;
+        this.posicao.y += 1;
+        if(!this.mapa.checkBorder(this.posicao) && !this.mapa.isWall(this.posicao)){
+            this.x += 32;
+        }else{
+          this.posicao.y -=1;
+        }
         break;
+
+
       case ARROW_DOWN:
-        this.y += 32;
+        this.posicao.x += 1;
+        if(!this.mapa.checkBorder(this.posicao) && !this.mapa.isWall(this.posicao)){
+            this.y += 32;
+        }else{
+          this.posicao.x -=1;
+        }
         break;
+
+
       default:
         break;          
     }
 }
+}
+
+class Mapa {
+  var mapa;
+  var paredeData;
+  var chaoData;
+  Stage stage;
+  var _mapa = makeMatrix(30, 30);
+  Mapa(m, paredeD, chaoD, Stage s){
+    this.mapa = m;
+    this.paredeData = paredeD;
+    this.chaoData = chaoD;
+    this.stage = s;
+  }
+    void setMapa(var m){
+    this.mapa = m;
+  }
+  void getMapa(){
+    return this.mapa;
+  }
+  bool isWall(Point p){
+    if(mapa[p.x][p.y] == "X"){
+      return true;
+    }else{
+      return false;
+    }
+  }
+  void draw(){
+    for (var i = 0; i < this.mapa.length; i++) {
+    for(var j = 0; j < this.mapa[i].length; j++){
+          if(this.mapa[i][j] == "X"){
+            _mapa[i][j] = (Parede(paredeData, stage, j*32+720, i*32));
+          }
+          else if(this.mapa[i][j] == "C"){
+            _mapa[i][j] = (Parede(chaoData, stage, j*32+720, i*32));
+          }
+    }
+  }
+  }
+  bool checkBorder(Point p){
+    print("check");
+    print(p);
+    if((p.x >= 15 || p.x < 0) || (p.y >= 15 || p.y < 0)){
+      print("Deu false");
+      return true;
+    }
+    return false;
+  }
 }
 
 

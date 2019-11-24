@@ -107,8 +107,7 @@ class Player extends Sprite{
     switch(ke.keyCode){
       case ARROW_LEFT:
         this.posicao.y -= 1;
-        print(this.posicao);
-        if(!this.mapa.isWall(this.posicao) && !this.mapa.checkBorder(this.posicao)){
+        if( !this.mapa.checkBorder(this.posicao) && !this.mapa.isWall(this.posicao) ){
             this.x -= 32;
         }else{
           this.posicao.y +=1;
@@ -118,7 +117,7 @@ class Player extends Sprite{
 
       case ARROW_UP:
         this.posicao.x -= 1;
-        if(!this.mapa.isWall(this.posicao) && !this.mapa.checkBorder(this.posicao)){
+        if(!this.mapa.checkBorder(this.posicao) && !this.mapa.isWall(this.posicao)){
             this.y -= 32;
         }else{
           this.posicao.x +=1;
@@ -192,10 +191,11 @@ class Mapa {
   bool checkBorder(Point p){
     print("check");
     print(p);
-    if((p.x >= 15 || p.x < 0) || (p.y >= 15 || p.y < 0)){
-      print("Deu false");
+    if((p.x >= 15) || (p.x < 0) || (p.y >= 15) || (p.y < 0)){
+      print("Deu true");
       return true;
     }
+    print("deu false");
     return false;
   }
 }

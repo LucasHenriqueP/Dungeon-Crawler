@@ -23,18 +23,28 @@ Future<Null> main() async {
   resourceManager.addBitmapData("parede", "images/stone_brick1.png");
   resourceManager.addBitmapData("chao", "images/floor_sand_stone2.png");
   resourceManager.addBitmapData("player", "images/unseen_horror.png");
+  resourceManager.addBitmapData("corredor", "images/paredes.png");
+  resourceManager.addBitmapData("bauFechado", "images/chestClose.png");
+  resourceManager.addBitmapData("bauAberto", "images/chestOpen.png");
+  resourceManager.addBitmapData("bauFechadoMapa", "images/chest2_closed.png");
+  resourceManager.addBitmapData("bauAbertoMapa", "images/chest2_open.png");
+  resourceManager.addBitmapData("monstro", "images/boss.jpeg");
   await resourceManager.load();
-
 
   var logoData = resourceManager.getBitmapData("dart");
   var paredeData = resourceManager.getBitmapData("parede");
   var chaoData = resourceManager.getBitmapData("chao");
   var playerData = resourceManager.getBitmapData("player");
-
-  
+  var corredorData = resourceManager.getBitmapData("corredor");
+  var bauFechadoData = resourceManager.getBitmapData("bauFechado");
+  var bauAbertoData = resourceManager.getBitmapData("bauAberto");
+  var bauFechadoMapaData = resourceManager.getBitmapData("bauFechadoMapa");
+  var bauAbertoMapaData = resourceManager.getBitmapData("bauAbertoMapa");
+  var monstroData = resourceManager.getBitmapData("monstro");
+ 
   var logo = Sprite();
   var m1 = mapa1();
-    Mapa mapa = Mapa(m1, paredeData, chaoData, stage);
+    Mapa mapa = Mapa(m1, paredeData, chaoData, bauFechadoMapaData, bauAbertoMapaData, stage);
   mapa.draw();
   Player player = Player(playerData, stage, 720, 32, mapa);
 
@@ -52,7 +62,20 @@ Future<Null> main() async {
   logo.y = 0;
 
   stage.addChild(logo);
-  
+
+  // FPV
+  FPV fpv = FPV(stage);
+  fpv.setCorredor(corredorData);
+  fpv.desenhaCorredor(Point(0, 0));
+
+  // Testando Bau 
+  fpv.setBauAberto(bauFechadoData);
+  fpv.desenhaBauAberto(Point(190, 280));
+
+  fpv.removeBauAberto();
+
+  fpv.setBauFechado(bauAbertoData);
+  fpv.desenhaBauFechado(Point(190, 280));
 
   // And let it fall.
   var tween = stage.juggler.addTween(logo, 3, Transition.easeOutBounce);
@@ -155,12 +178,16 @@ class Mapa {
   var mapa;
   var paredeData;
   var chaoData;
+  var bauFechadoData;
+  var bauAbertoData;
   Stage stage;
   var _mapa = makeMatrix(30, 30);
-  Mapa(m, paredeD, chaoD, Stage s){
+  Mapa(m, paredeD, chaoD, bauFD, bauAD, Stage s){
     this.mapa = m;
     this.paredeData = paredeD;
     this.chaoData = chaoD;
+    this.bauFechadoData = bauFD;
+    this.bauAbertoData = bauAD;
     this.stage = s;
   }
     void setMapa(var m){
@@ -185,6 +212,11 @@ class Mapa {
           else if(this.mapa[i][j] == "C"){
             _mapa[i][j] = (Parede(chaoData, stage, j*32+720, i*32));
           }
+          else if(this.mapa[i][j] == "B"){
+            _mapa[i][j] = (Parede(chaoData, stage, j*32+720, i*32));
+            _mapa[i][j] = (Parede(bauFechadoData, stage, j*32+720, i*32));
+
+          }
     }
   }
   }
@@ -200,8 +232,60 @@ class Mapa {
   }
 }
 
-
-
+class FPV {
+  Stage stage;
+  Sprite corredor = Sprite();
+  Sprite bauAberto = Sprite();
+  Sprite bauFechado = Sprite();
+  Sprite inimigo = Sprite();
+  FPV(Stage s){
+    this.stage = s;
+  }
+  void setCorredor(var data){
+    corredor.addChild(Bitmap (data));
+  }
+  void setBauAberto(var data){
+    bauAberto.addChild(Bitmap (data));
+  }
+  void setBauFechado(var data){
+    bauFechado.addChild(Bitmap (data));
+  }
+  void setInimigo(var data){
+    inimigo.addChild(Bitmap (data));
+  }
+  void desenhaCorredor(Point p){
+    corredor.width = corredor.width * 2.5;
+    corredor.height = corredor.height * 2.5;
+    corredor.x = p.x;
+    corredor.y = p.y;
+    stage.addChild(corredor);
+  }
+  void desenhaBauAberto(Point p){
+    bauAberto.width = bauAberto.width / 2;
+    bauAberto.height = bauAberto.height / 2;
+    bauAberto.x = p.x;
+    bauAberto.y = p.y;
+    stage.addChild(bauAberto);
+  }
+  void desenhaBauFechado(Point p){
+    bauFechado.width = bauFechado.width / 2;
+    bauFechado.height = bauFechado.height / 2;
+    bauFechado.x = p.x; 
+    bauFechado.y = p.y;
+    stage.addChild(bauFechado);
+  }
+  void removeBauAberto(){
+    stage.removeChild(bauAberto);
+  }
+  void removeBauFechado(){
+    stage.removeChild(bauFechado);
+  }
+  void desenhaInimigo(Point p){
+    inimigo.x = p.x;
+    inimigo.y = p.y;
+    stage.addChild(inimigo);
+  }
+}
 
 makeMatrix(m, n) {
    var x = new List.generate(m, (_) => new List(n));

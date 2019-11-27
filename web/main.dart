@@ -23,32 +23,53 @@ Future<Null> main() async {
   resourceManager.addBitmapData("parede", "images/stone_brick1.png");
   resourceManager.addBitmapData("chao", "images/floor_sand_stone2.png");
   resourceManager.addBitmapData("player", "images/unseen_horror.png");
-  resourceManager.addBitmapData("corredor", "images/paredes.png");
   resourceManager.addBitmapData("bauFechado", "images/chestClose.png");
   resourceManager.addBitmapData("bauAberto", "images/chestOpen.png");
   resourceManager.addBitmapData("bauFechadoMapa", "images/chest2_closed.png");
   resourceManager.addBitmapData("bauAbertoMapa", "images/chest2_open.png");
   resourceManager.addBitmapData("monstro", "images/boss.jpeg");
+  resourceManager.addBitmapData("parede_corredor_parede", "images/corredor/parede_corredor_parede.png");
+  resourceManager.addBitmapData("parede_corredor_porta", "images/corredor/parede_corredor_porta.png");
+  resourceManager.addBitmapData("parede_parede_parede", "images/corredor/parede_parede_parede.png");
+  resourceManager.addBitmapData("parede_parede_porta", "images/corredor/parede_parede_porta.png");
+  resourceManager.addBitmapData("porta_corredor_parede", "images/corredor/porta_corredor_parede.png");
+  resourceManager.addBitmapData("porta_corredor_porta", "images/corredor/porta_corredor_porta.png");
+  resourceManager.addBitmapData("porta_parede_parede", "images/corredor/porta_parede_parede.png");
+  resourceManager.addBitmapData("porta_parede_porta", "images/corredor/porta_parede_porta.png");
   await resourceManager.load();
 
   var logoData = resourceManager.getBitmapData("dart");
   var paredeData = resourceManager.getBitmapData("parede");
   var chaoData = resourceManager.getBitmapData("chao");
   var playerData = resourceManager.getBitmapData("player");
-  var corredorData = resourceManager.getBitmapData("corredor");
+  // var corredorData = resourceManager.getBitmapData("corredor");
   var bauFechadoData = resourceManager.getBitmapData("bauFechado");
   var bauAbertoData = resourceManager.getBitmapData("bauAberto");
   var bauFechadoMapaData = resourceManager.getBitmapData("bauFechadoMapa");
   var bauAbertoMapaData = resourceManager.getBitmapData("bauAbertoMapa");
   var monstroData = resourceManager.getBitmapData("monstro");
+
+  var listaImagens = new Map();
+  listaImagens['parede_corredor_parede'] = resourceManager.getBitmapData("parede_corredor_parede"); 
+  listaImagens['parede_corredor_porta'] = resourceManager.getBitmapData("parede_corredor_porta"); 
+  listaImagens['parede_parede_parede'] = resourceManager.getBitmapData("parede_parede_parede"); 
+  listaImagens['parede_parede_porta'] = resourceManager.getBitmapData("parede_parede_porta"); 
+  listaImagens['porta_corredor_parede'] = resourceManager.getBitmapData("porta_corredor_parede"); 
+  listaImagens['porta_corredor_porta'] = resourceManager.getBitmapData("porta_corredor_porta"); 
+  listaImagens['porta_parede_parede'] = resourceManager.getBitmapData("porta_parede_parede"); 
+  listaImagens['porta_parede_porta'] = resourceManager.getBitmapData("porta_parede_porta"); 
  
   var logo = Sprite();
   var m1 = mapa1();
-    Mapa mapa = Mapa(m1, paredeData, chaoData, bauFechadoMapaData, bauAbertoMapaData, stage);
+  Mapa mapa = Mapa(m1, paredeData, chaoData, bauFechadoMapaData, bauAbertoMapaData, stage);
   mapa.draw();
   Player player = Player(playerData, stage, 720, 32, mapa);
 
   player.mouseCursor = MouseCursor.POINTER;
+  FPV fpv = FPV(stage, mapa.mapa, listaImagens);
+
+  Game game = Game(player, mapa, fpv);
+
   // See more examples:
   // https://github.com/bp74/StageXL_Samples
 
@@ -64,18 +85,16 @@ Future<Null> main() async {
   stage.addChild(logo);
 
   // FPV
-  FPV fpv = FPV(stage);
-  fpv.setCorredor(corredorData);
-  fpv.desenhaCorredor(Point(0, 0));
+  // fpv.setCorredor(corredorData, Point(0, 0));
 
   // Testando Bau 
-  fpv.setBauAberto(bauFechadoData);
-  fpv.desenhaBauAberto(Point(190, 280));
+  // fpv.setBauAberto(bauFechadoData);
+  // fpv.desenhaBauAberto(Point(190, 280));
 
-  fpv.removeBauAberto();
+  // fpv.removeBauAberto();
 
-  fpv.setBauFechado(bauAbertoData);
-  fpv.desenhaBauFechado(Point(190, 280));
+  // fpv.setBauFechado(bauAbertoData);
+  // fpv.desenhaBauFechado(Point(190, 280));
 
   // And let it fall.
   var tween = stage.juggler.addTween(logo, 3, Transition.easeOutBounce);
@@ -96,6 +115,8 @@ Future<Null> main() async {
   // https://github.com/bp74/StageXL_Samples
 }
 
+
+
 class Parede {
   Sprite parede =  Sprite();
   Stage stage;
@@ -110,6 +131,65 @@ class Parede {
   }
 }
 
+class Game {
+  Player player;
+  Mapa mapa;
+  FPV fpv;
+  Game(Player player, Mapa mapa, FPV fpv){
+    this.player = player;
+    this.mapa = mapa;
+    this.fpv = fpv;
+    this.fpv.setCorredor(Point(0, 0), Point(player.posicao.x, player.posicao.y));
+    window.onKeyUp.listen(_onKeyUp);
+  }
+  void _onKeyUp(var ke) {
+    switch(ke.keyCode){
+      case ARROW_LEFT:
+        player.posicao.y -= 1;
+        if( !this.mapa.checkBorder(player.posicao) && !this.mapa.isWall(player.posicao) ){
+            player.x -= 32;
+            this.fpv.setCorredor(Point(0, 0), Point(player.posicao.x, player.posicao.y));
+        }else{
+          player.posicao.y +=1;
+        }
+        break;
+
+      case ARROW_UP:
+        player.posicao.x -= 1;
+        if(!this.mapa.checkBorder(player.posicao) && !this.mapa.isWall(player.posicao)){
+            player.y -= 32;
+            this.fpv.setCorredor(Point(0, 0), Point(player.posicao.x, player.posicao.y));
+        }else{
+          player.posicao.x +=1;
+        }
+        break;
+
+      case ARROW_RIGHT:
+        player.posicao.y += 1;
+        if(!this.mapa.checkBorder(player.posicao) && !this.mapa.isWall(player.posicao)){
+            player.x += 32;
+            this.fpv.setCorredor(Point(0, 0), Point(player.posicao.x, player.posicao.y));
+        }else{
+          player.posicao.y -=1;
+        }
+        break;
+
+      case ARROW_DOWN:
+        player.posicao.x += 1;
+        if(!this.mapa.checkBorder(player.posicao) && !this.mapa.isWall(player.posicao)){
+            player.y += 32;
+            this.fpv.setCorredor(Point(0, 0), Point(player.posicao.x, player.posicao.y));
+        }else{
+          player.posicao.x -=1;
+        }
+        break;
+        
+      default:
+        break;          
+    }
+  }
+}
+
 class Player extends Sprite{
   Stage stage;
   Point posicao = Point(1,  0);
@@ -118,7 +198,6 @@ class Player extends Sprite{
     this.addChild(Bitmap (playerData));
     this.x = posX;
     this.y = posY;
-    window.onKeyUp.listen(_onKeyUp);
     this.mapa = map;
     this.desenha();
   }
@@ -126,52 +205,6 @@ class Player extends Sprite{
     this.mapa.isWall(this.posicao);
     stage.addChild(this);
   }
-    void _onKeyUp(var ke) {
-    switch(ke.keyCode){
-      case ARROW_LEFT:
-        this.posicao.y -= 1;
-        if( !this.mapa.checkBorder(this.posicao) && !this.mapa.isWall(this.posicao) ){
-            this.x -= 32;
-        }else{
-          this.posicao.y +=1;
-        }
-        break;
-
-
-      case ARROW_UP:
-        this.posicao.x -= 1;
-        if(!this.mapa.checkBorder(this.posicao) && !this.mapa.isWall(this.posicao)){
-            this.y -= 32;
-        }else{
-          this.posicao.x +=1;
-        }
-        break;
-
-
-      case ARROW_RIGHT:
-        this.posicao.y += 1;
-        if(!this.mapa.checkBorder(this.posicao) && !this.mapa.isWall(this.posicao)){
-            this.x += 32;
-        }else{
-          this.posicao.y -=1;
-        }
-        break;
-
-
-      case ARROW_DOWN:
-        this.posicao.x += 1;
-        if(!this.mapa.checkBorder(this.posicao) && !this.mapa.isWall(this.posicao)){
-            this.y += 32;
-        }else{
-          this.posicao.x -=1;
-        }
-        break;
-
-
-      default:
-        break;          
-    }
-}
 }
 
 class Mapa {
@@ -195,6 +228,9 @@ class Mapa {
   }
   void getMapa(){
     return this.mapa;
+  }
+  void whatIs(){
+
   }
   bool isWall(Point p){
     if(mapa[p.x][p.y] == "X"){
@@ -234,15 +270,48 @@ class Mapa {
 
 class FPV {
   Stage stage;
+  var mapa;
   Sprite corredor = Sprite();
   Sprite bauAberto = Sprite();
   Sprite bauFechado = Sprite();
   Sprite inimigo = Sprite();
-  FPV(Stage s){
+  var imagens;
+  FPV(Stage s, var mapa, var imagens){
     this.stage = s;
+    this.mapa = mapa;
+    this.imagens = imagens;
   }
-  void setCorredor(var data){
-    corredor.addChild(Bitmap (data));
+  // Desenha corredor
+  void setCorredor(Point posicaoCorredor, Point p){
+    if((this.mapa[p.x-1][p.y] == "X") && (this.mapa[p.x][p.y+1] != "X") && (this.mapa[p.x+1][p.y] == "X")){
+      this.corredor.addChild(Bitmap (this.imagens['parede_corredor_parede']));
+    }
+    else if((this.mapa[p.x-1][p.y] == "X") && (this.mapa[p.x][p.y+1] != "X") && (this.mapa[p.x+1][p.y] != "X")){
+      this.corredor.addChild(Bitmap (this.imagens['parede_corredor_porta']));
+    }
+    else if((this.mapa[p.x-1][p.y] == "X") && (this.mapa[p.x][p.y+1] == "X") && (this.mapa[p.x+1][p.y] == "X")){
+      this.corredor.addChild(Bitmap (this.imagens['parede_parede_parede']));
+    }
+    else if((this.mapa[p.x-1][p.y] == "X") && (this.mapa[p.x][p.y+1] == "X") && (this.mapa[p.x+1][p.y] != "X")){
+      this.corredor.addChild(Bitmap (this.imagens['parede_parede_porta']));
+    }
+    else if((this.mapa[p.x-1][p.y] != "X") && (this.mapa[p.x][p.y+1] != "X") && (this.mapa[p.x+1][p.y] == "X")){
+      this.corredor.addChild(Bitmap (this.imagens['porta_corredor_parede']));
+    }
+    else if((this.mapa[p.x-1][p.y] != "X") && (this.mapa[p.x][p.y+1] != "X") && (this.mapa[p.x+1][p.y] != "X")){
+      this.corredor.addChild(Bitmap (this.imagens['porta_corredor_porta']));
+    }
+    else if((this.mapa[p.x-1][p.y] != "X") && (this.mapa[p.x][p.y+1] == "X") && (this.mapa[p.x+1][p.y] == "X")){
+      this.corredor.addChild(Bitmap (this.imagens['porta_parede_parede']));
+    }
+    else if((this.mapa[p.x-1][p.y] != "X") && (this.mapa[p.x][p.y+1] == "X") && (this.mapa[p.x+1][p.y] != "X")){
+      this.corredor.addChild(Bitmap (this.imagens['porta_parede_porta']));
+    }
+    this.corredor.width = 480;
+    this.corredor.height = 480;
+    this.corredor.x = posicaoCorredor.x;
+    this.corredor.y = posicaoCorredor.y;
+    this.stage.addChild(corredor);
   }
   void setBauAberto(var data){
     bauAberto.addChild(Bitmap (data));
@@ -252,13 +321,6 @@ class FPV {
   }
   void setInimigo(var data){
     inimigo.addChild(Bitmap (data));
-  }
-  void desenhaCorredor(Point p){
-    corredor.width = corredor.width * 2.5;
-    corredor.height = corredor.height * 2.5;
-    corredor.x = p.x;
-    corredor.y = p.y;
-    stage.addChild(corredor);
   }
   void desenhaBauAberto(Point p){
     bauAberto.width = bauAberto.width / 2;

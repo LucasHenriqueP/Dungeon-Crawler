@@ -207,6 +207,10 @@ class Player extends Sprite{
   Stage stage;
   Point posicao = Point(1, 1);
   Mapa mapa;
+  Stats stats;
+  Armor armor;
+  Weapon weapon;
+
   Player(playerData, this.stage, posX, posY, map){
     this.addChild(Bitmap (playerData));
     this.x = posX;
@@ -217,6 +221,16 @@ class Player extends Sprite{
   void desenha(){
     this.mapa.isWall(this.posicao);
     stage.addChild(this);
+  }
+}
+
+class Enemy {
+  Stats stats;
+  var frase;
+
+  Enemy(Stats stats, var frase){
+    this.stats = stats;
+    this.frase = frase;
   }
 }
 
@@ -377,6 +391,129 @@ class FPV {
   //   inimigo.y = p.y;
   //   stage.addChild(inimigo);
   // }
+}
+
+class Armor {
+  var accuracy;
+  var critical;
+  var defense;
+  var dexterity;
+  var damage;
+
+  Weapon(var accuracy, var critical, var defense, var dexterity, var damage){
+    this.accuracy = accuracy;
+    this.accuracy = accuracy;
+    this.defense = defense;
+    this.dexterity = dexterity;
+    this.damage = damage;
+  }
+}
+
+class Weapon {
+  var accuracy;
+  var critical;
+  var defense;
+  var dexterity;
+  var damage;
+
+  Weapon(var accuracy, var critical, var defense, var dexterity, var damage){
+    this.accuracy = accuracy;
+    this.accuracy = accuracy;
+    this.defense = defense;
+    this.dexterity = dexterity;
+    this.damage = damage;
+  }
+}
+
+class Stats {
+  var hp;
+  var damage;
+  var defense;
+  var accuracy;
+  var critical;
+  var dexterity;
+  var xp;
+  Armor armor;
+  Weapon weapon;
+
+}
+
+class Battle {
+  Enemy enemy;
+  Player player;
+  var max_critical;
+
+  Battle(Enemy enemy, Player player) {
+    this.enemy = enemy;
+    this.player = player;
+    this.max_critical = 100;
+  }
+
+  playerAtack(){
+    int plyDamage = this.player.stats.damage + this.player.weapon.damage + this.player.armor.damage;
+    int plyAccuracy = this.player.stats.accuracy + this.player.weapon.accuracy + this.player.armor.accuracy;
+    int plyCritical = this.player.stats.critical + this.player.weapon.critical + this.player.armor.critical;
+    int critical = 1;
+
+    /* Gerando numero aleatorio */
+    int minimo = 1;
+    int maximo = max_critical;
+    Random rnd = new Random();
+    var r = minimo + rnd.nextInt(maximo - minimo);
+
+    if (r <= plyCritical) {
+      critical = 2; // dobra força do ataque
+    }
+
+    // destreza em evadir ataque vs acurácia em acertá-lo
+    // ex: enemy.dexterity = 15 e plyAccuracy = 5:
+    // jogador tem 33% de chance de acertar ataque
+    minimo = 1;
+    maximo = this.enemy.stats.dexterity;
+    rnd = new Random();
+    r = minimo + rnd.nextInt(maximo - minimo);
+
+    if (r <= plyAccuracy) {
+      int damage = plyDamage * critical - this.enemy.stats.defense;
+      damage = max(damage, 0); // impede que dano seja negativo
+      this.enemy.stats.hp -= damage;
+      print("Jogador ataca o inimigo, causando $damage de dano.");
+    } else {
+      print("Jogador erra ataque.");
+    }
+  }
+
+  enemyAtack(){
+    int plyDefense = this.player.stats.defense + this.player.weapon.defense + this.player.armor.defense;
+    int plyDexterity = this.player.stats.dexterity + this.player.weapon.dexterity + this.player.armor.dexterity;
+    int critical = 1;
+    
+    /* Gerando numero aleatorio */
+    int minimo = 1;
+    int maximo = max_critical;
+    Random rnd = new Random();
+    var r = minimo + rnd.nextInt(maximo - minimo);
+
+    if (r <= enemy.stats.critical) {
+      critical = 2; // dobra força do ataque
+    }
+    // destreza em evadir ataque vs acurácia em acertá-lo
+    // ex: plyDexterity = 15 e enemy.accuracy = 5:
+    // inimigo tem 33% de chance de acertar ataque
+    minimo = 1;
+    maximo = plyDexterity;
+    rnd = new Random();
+    r = minimo + rnd.nextInt(maximo - minimo);
+
+    if (r <= this.enemy.stats.accuracy) {
+      int damage = this.enemy.stats.accuracy * critical - plyDefense;
+      damage = max(damage, 0); // impede que dano seja negativo
+      this.player.stats.hp -= damage;
+      print("Inimigo ataca o jogador, causando $damage de dano.");
+    } else {
+      print("Inimigo erra ataque.");  
+    }
+  }
 }
 
 makeMatrix(m, n) {

@@ -69,7 +69,7 @@ Future<Null> main() async {
   mapa.draw(); // Desenha todo o mapa
   mapa.drawBlack(); // Deixa o mapa escuro
 
-  Player player = Player(playerData, stage, 720, 32, mapa);
+  Player player = Player(playerData, stage, 752, 32, mapa);
 
   player.mouseCursor = MouseCursor.POINTER;
   FPV fpv = FPV(stage, mapa.mapa, listaImagens);
@@ -124,7 +124,7 @@ class Parede {
   }
   void desenha(){
     if(this.tipo == "corredor"){
-      parede.width = 480;
+      parede.width = 640;
       parede.height = 480;
     }
     stage.addChild(parede);
@@ -142,7 +142,7 @@ class Game {
     this.mapa = mapa;
     this.fpv = fpv;
     this.posicaoCorredor = Point(0, 0);
-    this.posicaoBau = Point(175, 240);
+    this.posicaoBau = Point(257, 240);
     this.fpv.setCorredor(posicaoCorredor, Point(player.posicao.x, player.posicao.y));
     this.mapa.removeBlack(Point(1, 0));
     window.onKeyUp.listen(_onKeyUp);
@@ -205,7 +205,7 @@ class Game {
 
 class Player extends Sprite{
   Stage stage;
-  Point posicao = Point(1,  0);
+  Point posicao = Point(1, 1);
   Mapa mapa;
   Player(playerData, this.stage, posX, posY, map){
     this.addChild(Bitmap (playerData));
@@ -311,7 +311,10 @@ class FPV {
   }
   // Desenha corredor
   void setCorredor(Point posicaoCorredor, Point p /*posicao player*/){
-    if((this.mapa[p.x-1][p.y] == "X") && (this.mapa[p.x][p.y+1] != "X") && (this.mapa[p.x+1][p.y] == "X")){
+    if((p.x >= 14) || (p.x <= 0) || (p.y >= 14) || (p.y <= 0)) {
+      print("oi");
+    }
+    else if ((this.mapa[p.x-1][p.y] == "X") && (this.mapa[p.x][p.y+1] != "X") && (this.mapa[p.x+1][p.y] == "X")){
       this.corredor = Parede(this.imagens['parede_corredor_parede'], this.stage, posicaoCorredor.x, posicaoCorredor.y, "corredor");
     }
     else if((this.mapa[p.x-1][p.y] == "X") && (this.mapa[p.x][p.y+1] != "X") && (this.mapa[p.x+1][p.y] != "X")){

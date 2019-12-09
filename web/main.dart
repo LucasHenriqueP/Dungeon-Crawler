@@ -37,6 +37,8 @@ Future<Null> main() async {
   resourceManager.addBitmapData("bau_aberto", "images/chestOpen.png");
   resourceManager.addBitmapData("bau_fechado_mapa", "images/chest2_closed.png");
   resourceManager.addBitmapData("stone_black", "images/stone_black.png");
+  resourceManager.addBitmapData("closed_door", "images/dngn_closed_door.png");
+  resourceManager.addBitmapData("tela", "images/tela.png");
   await resourceManager.load();
 
   var logoData = resourceManager.getBitmapData("dart");
@@ -63,13 +65,16 @@ Future<Null> main() async {
   listaImagens['parede'] = resourceManager.getBitmapData("parede"); 
   listaImagens['chao'] = resourceManager.getBitmapData("chao"); 
   listaImagens['stone_black'] = resourceManager.getBitmapData("stone_black"); 
+  listaImagens['closed_door'] = resourceManager.getBitmapData("closed_door"); 
+  listaImagens['tela'] = resourceManager.getBitmapData("tela"); 
  
+  Parede tela = new Parede(listaImagens['tela'], stage, 0, 0, 'tela');
   var m1 = mapa1();
   Mapa mapa = Mapa(m1, listaImagens, stage);
   mapa.draw(); // Desenha todo o mapa
   mapa.drawBlack(); // Deixa o mapa escuro
 
-  Player player = Player(playerData, stage, 752, 32, mapa);
+  Player player = Player(playerData, stage, 752, 64, mapa);
 
   player.mouseCursor = MouseCursor.POINTER;
   FPV fpv = FPV(stage, mapa.mapa, listaImagens);
@@ -107,6 +112,7 @@ Future<Null> main() async {
 
   // See more examples:
   // https://github.com/bp74/StageXL_Samples
+
 }
 
 
@@ -141,21 +147,20 @@ class Game {
     this.player = player;
     this.mapa = mapa;
     this.fpv = fpv;
-    this.posicaoCorredor = Point(0, 0);
-    this.posicaoBau = Point(257, 240);
+    this.posicaoCorredor = Point(32, 32);
+    this.posicaoBau = Point(289, 272);
     this.fpv.setCorredor(posicaoCorredor, Point(player.posicao.x, player.posicao.y));
     this.mapa.removeBlack(Point(1, 0));
     window.onKeyUp.listen(_onKeyUp);
   }
   void _onKeyUp(var ke) {
+    bool moveu = false;
     switch(ke.keyCode){
       case ARROW_LEFT:
         player.posicao.y -= 1;
         if( !this.mapa.checkBorder(player.posicao) && !this.mapa.isWall(player.posicao) ){
             player.x -= 32;
-            this.fpv.setCorredor(posicaoCorredor, Point(player.posicao.x, player.posicao.y));
-            this.fpv.setBau(posicaoBau, Point(player.posicao.x, player.posicao.y));
-            this.mapa.removeBlack(Point(player.posicao.x, player.posicao.y));
+            moveu = true;
         }else{
           player.posicao.y +=1;
         }
@@ -165,9 +170,7 @@ class Game {
         player.posicao.x -= 1;
         if(!this.mapa.checkBorder(player.posicao) && !this.mapa.isWall(player.posicao)){
             player.y -= 32;
-            this.fpv.setCorredor(posicaoCorredor, Point(player.posicao.x, player.posicao.y));
-            this.fpv.setBau(posicaoBau, Point(player.posicao.x, player.posicao.y));
-            this.mapa.removeBlack(Point(player.posicao.x, player.posicao.y));
+            moveu = true;
         }else{
           player.posicao.x +=1;
         }
@@ -177,9 +180,7 @@ class Game {
         player.posicao.y += 1;
         if(!this.mapa.checkBorder(player.posicao) && !this.mapa.isWall(player.posicao)){
             player.x += 32;
-            this.fpv.setCorredor(posicaoCorredor, Point(player.posicao.x, player.posicao.y));
-            this.fpv.setBau(posicaoBau, Point(player.posicao.x, player.posicao.y));
-            this.mapa.removeBlack(Point(player.posicao.x, player.posicao.y));
+            moveu = true;
         }else{
           player.posicao.y -=1;
         }
@@ -189,9 +190,7 @@ class Game {
         player.posicao.x += 1;
         if(!this.mapa.checkBorder(player.posicao) && !this.mapa.isWall(player.posicao)){
             player.y += 32;
-            this.fpv.setCorredor(posicaoCorredor, Point(player.posicao.x, player.posicao.y));
-            this.fpv.setBau(posicaoBau, Point(player.posicao.x, player.posicao.y));
-            this.mapa.removeBlack(Point(player.posicao.x, player.posicao.y));
+            moveu = true;
         }else{
           player.posicao.x -=1;
         }
@@ -199,6 +198,14 @@ class Game {
         
       default:
         break;          
+    }
+    if(moveu){
+      this.fpv.setCorredor(posicaoCorredor, Point(player.posicao.x, player.posicao.y));
+      this.fpv.setBau(posicaoBau, Point(player.posicao.x, player.posicao.y));
+      this.mapa.removeBlack(Point(player.posicao.x, player.posicao.y));
+
+
+
     }
   }
 }
@@ -277,23 +284,27 @@ class Mapa {
   void draw(){
     for (var i = 0; i < this.mapa.length; i++) {
       for(var j = 0; j < this.mapa[i].length; j++){
-          if(this.mapa[i][j] == "X"){
-            _mapa[i][j] = (Parede(imagens['parede'], stage, j*32+720, i*32, "mapa"));
-          }
-          else if(this.mapa[i][j] == "C"){
-            _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32, "mapa"));
-          }
-          else if(this.mapa[i][j] == "B"){
-            _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32, "mapa"));
-            _mapa[i][j] = (Parede(imagens['bau_fechado_mapa'], stage, j*32+720, i*32, "mapa"));
-          }
+        if(this.mapa[i][j] == "X"){
+          _mapa[i][j] = (Parede(imagens['parede'], stage, j*32+720, i*32+32, "mapa"));
+        }
+        else if(this.mapa[i][j] == "C"){
+          _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32+32, "mapa"));
+        }
+        else if(this.mapa[i][j] == "B"){
+          _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32+32, "mapa"));
+          _mapa[i][j] = (Parede(imagens['bau_fechado_mapa'], stage, j*32+720, i*32+32, "mapa"));
+        }
+        else if(this.mapa[i][j] == "D"){
+          _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32+32, "mapa"));
+          _mapa[i][j] = (Parede(imagens['closed_door'], stage, j*32+720, i*32+32, "mapa"));
+        }
       }
     }
   }
   void drawBlack(){
     for (var i = 0; i < this.mapa.length; i++) {
       for(var j = 0; j < this.mapa[i].length; j++){
-        _mapa[i][j] = (Parede(imagens['stone_black'], stage, j*32+720, i*32, "escuro"));
+        _mapa[i][j] = (Parede(imagens['stone_black'], stage, j*32+720, i*32+32, "escuro"));
       }
     }
   }

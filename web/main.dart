@@ -71,6 +71,15 @@ Future<Null> main() async {
   Parede tela = new Parede(listaImagens['tela'], stage, 0, 0, 'tela');
   var m1 = mapa1();
   Mapa mapa = Mapa(m1, listaImagens, stage);
+  mapa.setItem(Armor("Espada de aço bruto", -2, 0, 0, 0, 15));
+  mapa.setItem(Armor("Armadura de aço bruto", 0, 0, 15, 0, -2));
+  mapa.setItem(Armor("Espada de madeira maciça", 0, 0, 0, 2, 5));
+  mapa.setItem(Armor("Armadura de madeira maciça", 0, 0, 5, 0, 0));
+  // mapa.setItem(Armor("Poção verde", -2, 0, 0, 0, 15));
+  // mapa.setItem(Armor("Poção azul", -2, 0, 0, 0, 15));
+  // mapa.setItem(Armor("Poção vermelha", -2, 0, 0, 0, 15));
+  // Armor(var descricao, int accuracy, int critical, int defense, int dexterity, int damage);
+
   mapa.draw(); // Desenha todo o mapa
   mapa.drawBlack(); // Deixa o mapa escuro
 
@@ -149,7 +158,7 @@ class Game {
     this.fpv = fpv;
     this.posicaoCorredor = Point(32, 32);
     this.posicaoBau = Point(289, 272);
-    this.fpv.setCorredor(posicaoCorredor, Point(player.posicao.x, player.posicao.y));
+    this.fpv.setCorredor(posicaoCorredor, player.posicao);
     this.mapa.removeBlack(Point(1, 0));
     window.onKeyUp.listen(_onKeyUp);
   }
@@ -200,11 +209,22 @@ class Game {
         break;          
     }
     if(moveu){
-      this.fpv.setCorredor(posicaoCorredor, Point(player.posicao.x, player.posicao.y));
-      this.fpv.setBau(posicaoBau, Point(player.posicao.x, player.posicao.y));
+      this.fpv.setCorredor(posicaoCorredor, player.posicao);
+      if(this.mapa.mapa[player.posicao.x][player.posicao.y] == "B"){
+        this.fpv.setBau(posicaoBau); // mostra bau na tela fpv
+        // mostra o que tem no bau
+        // escolhe o que tem no bau
+      } else if(this.mapa.mapa[player.posicao.x][player.posicao.y] == "E"){
+        // mostra inimigo no fpv
+        // escolhe entre atacar, fugir ou usar poção
+      }
       this.mapa.removeBlack(Point(player.posicao.x, player.posicao.y));
 
+      // Verifica se tem inimigo
+        // Se tiver faz a batalha
 
+      // verifica se tem porta
+        // se tiver
 
     }
   }
@@ -216,7 +236,8 @@ class Player extends Sprite{
   Mapa mapa;
   Stats stats;
   Armor armor;
-  Weapon weapon;
+  Armor weapon;
+  List<void> inventory = new List(6);
 
   Player(playerData, this.stage, posX, posY, map){
     this.addChild(Bitmap (playerData));
@@ -241,15 +262,33 @@ class Enemy {
   }
 }
 
+class Bau{
+  var item1;
+  var item2;
+  var tem; // indica o que ainda tem no bau
+  Point posicao;
+
+  Bau(Point posicao, var item1, var item2){
+    this.posicao = posicao;
+    this.item1 = item1;
+    this.item2 = item2;
+    this.tem = 3;
+  }
+}
+
 class Mapa {
   var mapa;
   var imagens;
   Stage stage;
+  List baus;
+  List itens;
   var _mapa = makeMatrix(30, 30);
   Mapa(m, var imagens, Stage s){
     this.mapa = m;
     this.imagens = imagens;
     this.stage = s;
+    this.baus = [];
+    this.itens = [];
   }
   void setMapa(var m){
     this.mapa = m;
@@ -287,12 +326,17 @@ class Mapa {
         if(this.mapa[i][j] == "X"){
           _mapa[i][j] = (Parede(imagens['parede'], stage, j*32+720, i*32+32, "mapa"));
         }
-        else if(this.mapa[i][j] == "C"){
+        else if(this.mapa[i][j] == "C" || this.mapa[i][j] == "E"){
           _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32+32, "mapa"));
         }
         else if(this.mapa[i][j] == "B"){
           _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32+32, "mapa"));
           _mapa[i][j] = (Parede(imagens['bau_fechado_mapa'], stage, j*32+720, i*32+32, "mapa"));
+          this.setBau(Point(i, j));
+          for(int k = 0; k < this.baus.length; k++){
+            print(this.baus[k].item1.descricao);
+            print(this.baus[k].item2.descricao);  
+          }
         }
         else if(this.mapa[i][j] == "D"){
           _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32+32, "mapa"));
@@ -318,6 +362,16 @@ class Mapa {
     print("deu false");
     return false;
   }
+  void setBau(Point p){
+    Random rnd = new Random();
+    var r1 = rnd.nextInt(6);
+    var r2 = rnd.nextInt(6);
+    baus.add(new Bau(p, this.itens[r1], this.itens[r2]));
+    print("foi");
+  }
+  void setItem(var item){
+    this.itens.add(item);
+  }
 }
 
 class FPV {
@@ -329,10 +383,12 @@ class FPV {
   Sprite inimigo = Sprite();
   var corredor;
   var imagens;
+  List baus;
   FPV(Stage s, var mapa, var imagens){
     this.stage = s;
     this.mapa = mapa;
     this.imagens = imagens;
+    this.baus = [];
   }
   // Desenha corredor
   void setCorredor(Point posicaoCorredor, Point p /*posicao player*/){
@@ -364,15 +420,13 @@ class FPV {
       this.corredor = Parede(this.imagens['porta_parede_porta'], this.stage, posicaoCorredor.x, posicaoCorredor.y, "corredor");
     }
   }
-  void setBau(Point posicaoBau, Point p){
-    if(this.mapa[p.x][p.y] == "B"){
-      this.bauFechado.addChild(Bitmap (this.imagens['bau_fechado']));
-      bauFechado.width = 127;
-      bauFechado.height = 127;
-      bauFechado.x = posicaoBau.x; 
-      bauFechado.y = posicaoBau.y;
-      stage.addChild(bauFechado);
-    }
+  void setBau(Point posicaoBau){
+    this.bauFechado.addChild(Bitmap (this.imagens['bau_fechado']));
+    bauFechado.width = 127;
+    bauFechado.height = 127;
+    bauFechado.x = posicaoBau.x; 
+    bauFechado.y = posicaoBau.y;
+    stage.addChild(bauFechado);
   }
   // void setInimigo(var data){
   //   inimigo.addChild(Bitmap (data));
@@ -405,31 +459,17 @@ class FPV {
 }
 
 class Armor {
-  var accuracy;
-  var critical;
-  var defense;
-  var dexterity;
-  var damage;
+  var descricao;
+  int accuracy;
+  int critical;
+  int defense;
+  int dexterity;
+  int damage;
 
-  Weapon(var accuracy, var critical, var defense, var dexterity, var damage){
+  Armor(var descricao, int accuracy, int critical, int defense, int dexterity, int damage){
+    this.descricao = descricao;
     this.accuracy = accuracy;
-    this.accuracy = accuracy;
-    this.defense = defense;
-    this.dexterity = dexterity;
-    this.damage = damage;
-  }
-}
-
-class Weapon {
-  var accuracy;
-  var critical;
-  var defense;
-  var dexterity;
-  var damage;
-
-  Weapon(var accuracy, var critical, var defense, var dexterity, var damage){
-    this.accuracy = accuracy;
-    this.accuracy = accuracy;
+    this.critical = critical;
     this.defense = defense;
     this.dexterity = dexterity;
     this.damage = damage;
@@ -437,22 +477,29 @@ class Weapon {
 }
 
 class Stats {
-  var hp;
-  var damage;
-  var defense;
-  var accuracy;
-  var critical;
-  var dexterity;
-  var xp;
-  Armor armor;
-  Weapon weapon;
+  int hp;
+  int damage;
+  int defense;
+  int accuracy;
+  int critical;
+  int dexterity;
+  int xp;
 
+  Stats(int hp, int xp, int accuracy, int critical, int defense, int dexterity, int damage){
+    this.hp = hp;
+    this.accuracy = accuracy;
+    this.critical = critical;
+    this.defense = defense;
+    this.dexterity = dexterity;
+    this.damage = damage;
+    this.xp = xp;
+  }
 }
 
 class Battle {
   Enemy enemy;
   Player player;
-  var max_critical;
+  int max_critical;
 
   Battle(Enemy enemy, Player player) {
     this.enemy = enemy;

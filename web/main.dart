@@ -37,6 +37,8 @@ Future<Null> main() async {
   resourceManager.addBitmapData("bau_aberto", "images/chestOpen.png");
   resourceManager.addBitmapData("bau_fechado_mapa", "images/chest2_closed.png");
   resourceManager.addBitmapData("stone_black", "images/stone_black.png");
+  resourceManager.addBitmapData("closed_door", "images/dngn_closed_door.png");
+  resourceManager.addBitmapData("tela", "images/tela.png");
   await resourceManager.load();
 
   var logoData = resourceManager.getBitmapData("dart");
@@ -63,13 +65,25 @@ Future<Null> main() async {
   listaImagens['parede'] = resourceManager.getBitmapData("parede"); 
   listaImagens['chao'] = resourceManager.getBitmapData("chao"); 
   listaImagens['stone_black'] = resourceManager.getBitmapData("stone_black"); 
+  listaImagens['closed_door'] = resourceManager.getBitmapData("closed_door"); 
+  listaImagens['tela'] = resourceManager.getBitmapData("tela"); 
  
+  Parede tela = new Parede(listaImagens['tela'], stage, 0, 0, 'tela');
   var m1 = mapa1();
   Mapa mapa = Mapa(m1, listaImagens, stage);
+  mapa.setItem(Armor("Espada de aço bruto", -2, 0, 0, 0, 15));
+  mapa.setItem(Armor("Armadura de aço bruto", 0, 0, 15, 0, -2));
+  mapa.setItem(Armor("Espada de madeira maciça", 0, 0, 0, 2, 5));
+  mapa.setItem(Armor("Armadura de madeira maciça", 0, 0, 5, 0, 0));
+  // mapa.setItem(Armor("Poção verde", -2, 0, 0, 0, 15));
+  // mapa.setItem(Armor("Poção azul", -2, 0, 0, 0, 15));
+  // mapa.setItem(Armor("Poção vermelha", -2, 0, 0, 0, 15));
+  // Armor(var descricao, int accuracy, int critical, int defense, int dexterity, int damage);
+
   mapa.draw(); // Desenha todo o mapa
   mapa.drawBlack(); // Deixa o mapa escuro
 
-  Player player = Player(playerData, stage, 720, 32, mapa);
+  Player player = Player(playerData, stage, 752, 64, mapa);
 
   player.mouseCursor = MouseCursor.POINTER;
   FPV fpv = FPV(stage, mapa.mapa, listaImagens);
@@ -107,6 +121,7 @@ Future<Null> main() async {
 
   // See more examples:
   // https://github.com/bp74/StageXL_Samples
+
 }
 
 
@@ -124,7 +139,7 @@ class Parede {
   }
   void desenha(){
     if(this.tipo == "corredor"){
-      parede.width = 480;
+      parede.width = 640;
       parede.height = 480;
     }
     stage.addChild(parede);
@@ -141,21 +156,20 @@ class Game {
     this.player = player;
     this.mapa = mapa;
     this.fpv = fpv;
-    this.posicaoCorredor = Point(0, 0);
-    this.posicaoBau = Point(175, 240);
-    this.fpv.setCorredor(posicaoCorredor, Point(player.posicao.x, player.posicao.y));
+    this.posicaoCorredor = Point(32, 32);
+    this.posicaoBau = Point(289, 272);
+    this.fpv.setCorredor(posicaoCorredor, player.posicao);
     this.mapa.removeBlack(Point(1, 0));
     window.onKeyUp.listen(_onKeyUp);
   }
   void _onKeyUp(var ke) {
+    bool moveu = false;
     switch(ke.keyCode){
       case ARROW_LEFT:
         player.posicao.y -= 1;
         if( !this.mapa.checkBorder(player.posicao) && !this.mapa.isWall(player.posicao) ){
             player.x -= 32;
-            this.fpv.setCorredor(posicaoCorredor, Point(player.posicao.x, player.posicao.y));
-            this.fpv.setBau(posicaoBau, Point(player.posicao.x, player.posicao.y));
-            this.mapa.removeBlack(Point(player.posicao.x, player.posicao.y));
+            moveu = true;
         }else{
           player.posicao.y +=1;
         }
@@ -165,9 +179,7 @@ class Game {
         player.posicao.x -= 1;
         if(!this.mapa.checkBorder(player.posicao) && !this.mapa.isWall(player.posicao)){
             player.y -= 32;
-            this.fpv.setCorredor(posicaoCorredor, Point(player.posicao.x, player.posicao.y));
-            this.fpv.setBau(posicaoBau, Point(player.posicao.x, player.posicao.y));
-            this.mapa.removeBlack(Point(player.posicao.x, player.posicao.y));
+            moveu = true;
         }else{
           player.posicao.x +=1;
         }
@@ -177,9 +189,7 @@ class Game {
         player.posicao.y += 1;
         if(!this.mapa.checkBorder(player.posicao) && !this.mapa.isWall(player.posicao)){
             player.x += 32;
-            this.fpv.setCorredor(posicaoCorredor, Point(player.posicao.x, player.posicao.y));
-            this.fpv.setBau(posicaoBau, Point(player.posicao.x, player.posicao.y));
-            this.mapa.removeBlack(Point(player.posicao.x, player.posicao.y));
+            moveu = true;
         }else{
           player.posicao.y -=1;
         }
@@ -189,9 +199,7 @@ class Game {
         player.posicao.x += 1;
         if(!this.mapa.checkBorder(player.posicao) && !this.mapa.isWall(player.posicao)){
             player.y += 32;
-            this.fpv.setCorredor(posicaoCorredor, Point(player.posicao.x, player.posicao.y));
-            this.fpv.setBau(posicaoBau, Point(player.posicao.x, player.posicao.y));
-            this.mapa.removeBlack(Point(player.posicao.x, player.posicao.y));
+            moveu = true;
         }else{
           player.posicao.x -=1;
         }
@@ -200,13 +208,37 @@ class Game {
       default:
         break;          
     }
+    if(moveu){
+      this.fpv.setCorredor(posicaoCorredor, player.posicao);
+      if(this.mapa.mapa[player.posicao.x][player.posicao.y] == "B"){
+        this.fpv.setBau(posicaoBau); // mostra bau na tela fpv
+        // mostra o que tem no bau
+        // escolhe o que tem no bau
+      } else if(this.mapa.mapa[player.posicao.x][player.posicao.y] == "E"){
+        // mostra inimigo no fpv
+        // escolhe entre atacar, fugir ou usar poção
+      }
+      this.mapa.removeBlack(Point(player.posicao.x, player.posicao.y));
+
+      // Verifica se tem inimigo
+        // Se tiver faz a batalha
+
+      // verifica se tem porta
+        // se tiver
+
+    }
   }
 }
 
 class Player extends Sprite{
   Stage stage;
-  Point posicao = Point(1,  0);
+  Point posicao = Point(1, 1);
   Mapa mapa;
+  Stats stats;
+  Armor armor;
+  Armor weapon;
+  List<void> inventory = new List(6);
+
   Player(playerData, this.stage, posX, posY, map){
     this.addChild(Bitmap (playerData));
     this.x = posX;
@@ -220,15 +252,43 @@ class Player extends Sprite{
   }
 }
 
+class Enemy {
+  Stats stats;
+  var frase;
+
+  Enemy(Stats stats, var frase){
+    this.stats = stats;
+    this.frase = frase;
+  }
+}
+
+class Bau{
+  var item1;
+  var item2;
+  var tem; // indica o que ainda tem no bau
+  Point posicao;
+
+  Bau(Point posicao, var item1, var item2){
+    this.posicao = posicao;
+    this.item1 = item1;
+    this.item2 = item2;
+    this.tem = 3;
+  }
+}
+
 class Mapa {
   var mapa;
   var imagens;
   Stage stage;
+  List baus;
+  List itens;
   var _mapa = makeMatrix(30, 30);
   Mapa(m, var imagens, Stage s){
     this.mapa = m;
     this.imagens = imagens;
     this.stage = s;
+    this.baus = [];
+    this.itens = [];
   }
   void setMapa(var m){
     this.mapa = m;
@@ -263,23 +323,32 @@ class Mapa {
   void draw(){
     for (var i = 0; i < this.mapa.length; i++) {
       for(var j = 0; j < this.mapa[i].length; j++){
-          if(this.mapa[i][j] == "X"){
-            _mapa[i][j] = (Parede(imagens['parede'], stage, j*32+720, i*32, "mapa"));
+        if(this.mapa[i][j] == "X"){
+          _mapa[i][j] = (Parede(imagens['parede'], stage, j*32+720, i*32+32, "mapa"));
+        }
+        else if(this.mapa[i][j] == "C" || this.mapa[i][j] == "E"){
+          _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32+32, "mapa"));
+        }
+        else if(this.mapa[i][j] == "B"){
+          _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32+32, "mapa"));
+          _mapa[i][j] = (Parede(imagens['bau_fechado_mapa'], stage, j*32+720, i*32+32, "mapa"));
+          this.setBau(Point(i, j));
+          for(int k = 0; k < this.baus.length; k++){
+            print(this.baus[k].item1.descricao);
+            print(this.baus[k].item2.descricao);  
           }
-          else if(this.mapa[i][j] == "C"){
-            _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32, "mapa"));
-          }
-          else if(this.mapa[i][j] == "B"){
-            _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32, "mapa"));
-            _mapa[i][j] = (Parede(imagens['bau_fechado_mapa'], stage, j*32+720, i*32, "mapa"));
-          }
+        }
+        else if(this.mapa[i][j] == "D"){
+          _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32+32, "mapa"));
+          _mapa[i][j] = (Parede(imagens['closed_door'], stage, j*32+720, i*32+32, "mapa"));
+        }
       }
     }
   }
   void drawBlack(){
     for (var i = 0; i < this.mapa.length; i++) {
       for(var j = 0; j < this.mapa[i].length; j++){
-        _mapa[i][j] = (Parede(imagens['stone_black'], stage, j*32+720, i*32, "escuro"));
+        _mapa[i][j] = (Parede(imagens['stone_black'], stage, j*32+720, i*32+32, "escuro"));
       }
     }
   }
@@ -293,6 +362,16 @@ class Mapa {
     print("deu false");
     return false;
   }
+  void setBau(Point p){
+    Random rnd = new Random();
+    var r1 = rnd.nextInt(6);
+    var r2 = rnd.nextInt(6);
+    baus.add(new Bau(p, this.itens[r1], this.itens[r2]));
+    print("foi");
+  }
+  void setItem(var item){
+    this.itens.add(item);
+  }
 }
 
 class FPV {
@@ -304,14 +383,19 @@ class FPV {
   Sprite inimigo = Sprite();
   var corredor;
   var imagens;
+  List baus;
   FPV(Stage s, var mapa, var imagens){
     this.stage = s;
     this.mapa = mapa;
     this.imagens = imagens;
+    this.baus = [];
   }
   // Desenha corredor
   void setCorredor(Point posicaoCorredor, Point p /*posicao player*/){
-    if((this.mapa[p.x-1][p.y] == "X") && (this.mapa[p.x][p.y+1] != "X") && (this.mapa[p.x+1][p.y] == "X")){
+    if((p.x >= 14) || (p.x <= 0) || (p.y >= 14) || (p.y <= 0)) {
+      print("oi");
+    }
+    else if ((this.mapa[p.x-1][p.y] == "X") && (this.mapa[p.x][p.y+1] != "X") && (this.mapa[p.x+1][p.y] == "X")){
       this.corredor = Parede(this.imagens['parede_corredor_parede'], this.stage, posicaoCorredor.x, posicaoCorredor.y, "corredor");
     }
     else if((this.mapa[p.x-1][p.y] == "X") && (this.mapa[p.x][p.y+1] != "X") && (this.mapa[p.x+1][p.y] != "X")){
@@ -336,15 +420,13 @@ class FPV {
       this.corredor = Parede(this.imagens['porta_parede_porta'], this.stage, posicaoCorredor.x, posicaoCorredor.y, "corredor");
     }
   }
-  void setBau(Point posicaoBau, Point p){
-    if(this.mapa[p.x][p.y] == "B"){
-      this.bauFechado.addChild(Bitmap (this.imagens['bau_fechado']));
-      bauFechado.width = 127;
-      bauFechado.height = 127;
-      bauFechado.x = posicaoBau.x; 
-      bauFechado.y = posicaoBau.y;
-      stage.addChild(bauFechado);
-    }
+  void setBau(Point posicaoBau){
+    this.bauFechado.addChild(Bitmap (this.imagens['bau_fechado']));
+    bauFechado.width = 127;
+    bauFechado.height = 127;
+    bauFechado.x = posicaoBau.x; 
+    bauFechado.y = posicaoBau.y;
+    stage.addChild(bauFechado);
   }
   // void setInimigo(var data){
   //   inimigo.addChild(Bitmap (data));
@@ -374,6 +456,122 @@ class FPV {
   //   inimigo.y = p.y;
   //   stage.addChild(inimigo);
   // }
+}
+
+class Armor {
+  var descricao;
+  int accuracy;
+  int critical;
+  int defense;
+  int dexterity;
+  int damage;
+
+  Armor(var descricao, int accuracy, int critical, int defense, int dexterity, int damage){
+    this.descricao = descricao;
+    this.accuracy = accuracy;
+    this.critical = critical;
+    this.defense = defense;
+    this.dexterity = dexterity;
+    this.damage = damage;
+  }
+}
+
+class Stats {
+  int hp;
+  int damage;
+  int defense;
+  int accuracy;
+  int critical;
+  int dexterity;
+  int xp;
+
+  Stats(int hp, int xp, int accuracy, int critical, int defense, int dexterity, int damage){
+    this.hp = hp;
+    this.accuracy = accuracy;
+    this.critical = critical;
+    this.defense = defense;
+    this.dexterity = dexterity;
+    this.damage = damage;
+    this.xp = xp;
+  }
+}
+
+class Battle {
+  Enemy enemy;
+  Player player;
+  int max_critical;
+
+  Battle(Enemy enemy, Player player) {
+    this.enemy = enemy;
+    this.player = player;
+    this.max_critical = 100;
+  }
+
+  playerAtack(){
+    int plyDamage = this.player.stats.damage + this.player.weapon.damage + this.player.armor.damage;
+    int plyAccuracy = this.player.stats.accuracy + this.player.weapon.accuracy + this.player.armor.accuracy;
+    int plyCritical = this.player.stats.critical + this.player.weapon.critical + this.player.armor.critical;
+    int critical = 1;
+
+    /* Gerando numero aleatorio */
+    int minimo = 1;
+    int maximo = max_critical;
+    Random rnd = new Random();
+    var r = minimo + rnd.nextInt(maximo - minimo);
+
+    if (r <= plyCritical) {
+      critical = 2; // dobra força do ataque
+    }
+
+    // destreza em evadir ataque vs acurácia em acertá-lo
+    // ex: enemy.dexterity = 15 e plyAccuracy = 5:
+    // jogador tem 33% de chance de acertar ataque
+    minimo = 1;
+    maximo = this.enemy.stats.dexterity;
+    rnd = new Random();
+    r = minimo + rnd.nextInt(maximo - minimo);
+
+    if (r <= plyAccuracy) {
+      int damage = plyDamage * critical - this.enemy.stats.defense;
+      damage = max(damage, 0); // impede que dano seja negativo
+      this.enemy.stats.hp -= damage;
+      print("Jogador ataca o inimigo, causando $damage de dano.");
+    } else {
+      print("Jogador erra ataque.");
+    }
+  }
+
+  enemyAtack(){
+    int plyDefense = this.player.stats.defense + this.player.weapon.defense + this.player.armor.defense;
+    int plyDexterity = this.player.stats.dexterity + this.player.weapon.dexterity + this.player.armor.dexterity;
+    int critical = 1;
+    
+    /* Gerando numero aleatorio */
+    int minimo = 1;
+    int maximo = max_critical;
+    Random rnd = new Random();
+    var r = minimo + rnd.nextInt(maximo - minimo);
+
+    if (r <= enemy.stats.critical) {
+      critical = 2; // dobra força do ataque
+    }
+    // destreza em evadir ataque vs acurácia em acertá-lo
+    // ex: plyDexterity = 15 e enemy.accuracy = 5:
+    // inimigo tem 33% de chance de acertar ataque
+    minimo = 1;
+    maximo = plyDexterity;
+    rnd = new Random();
+    r = minimo + rnd.nextInt(maximo - minimo);
+
+    if (r <= this.enemy.stats.accuracy) {
+      int damage = this.enemy.stats.accuracy * critical - plyDefense;
+      damage = max(damage, 0); // impede que dano seja negativo
+      this.player.stats.hp -= damage;
+      print("Inimigo ataca o jogador, causando $damage de dano.");
+    } else {
+      print("Inimigo erra ataque.");  
+    }
+  }
 }
 
 makeMatrix(m, n) {

@@ -380,7 +380,3 @@ makeMatrix(m, n) {
    var x = new List.generate(m, (_) => new List(n));
    return x;
 }
-
-void movePersonagem(e){
-  print(e);
-}

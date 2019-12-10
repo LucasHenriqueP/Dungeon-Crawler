@@ -39,6 +39,7 @@ Future<Null> main() async {
   resourceManager.addBitmapData("stone_black", "images/stone_black.png");
   resourceManager.addBitmapData("closed_door", "images/dngn_closed_door.png");
   resourceManager.addBitmapData("tela", "images/tela.png");
+  resourceManager.addBitmapData("btnTeste", "images/dngn_enter_shop.png");
   await resourceManager.load();
 
   var logoData = resourceManager.getBitmapData("dart");
@@ -49,45 +50,47 @@ Future<Null> main() async {
   // var bauFechadoMapaData = resourceManager.getBitmapData("bauFechadoMapa");
   // var bauAbertoMapaData = resourceManager.getBitmapData("bauAbertoMapa");
   var monstroData = resourceManager.getBitmapData("monstro");
+  var spr = resourceManager.getBitmapData("btnTeste");
 
   var listaImagens = new Map();
-  listaImagens['parede_corredor_parede'] = resourceManager.getBitmapData("parede_corredor_parede"); 
-  listaImagens['parede_corredor_porta'] = resourceManager.getBitmapData("parede_corredor_porta"); 
-  listaImagens['parede_parede_parede'] = resourceManager.getBitmapData("parede_parede_parede"); 
-  listaImagens['parede_parede_porta'] = resourceManager.getBitmapData("parede_parede_porta"); 
-  listaImagens['porta_corredor_parede'] = resourceManager.getBitmapData("porta_corredor_parede"); 
-  listaImagens['porta_corredor_porta'] = resourceManager.getBitmapData("porta_corredor_porta"); 
-  listaImagens['porta_parede_parede'] = resourceManager.getBitmapData("porta_parede_parede"); 
-  listaImagens['porta_parede_porta'] = resourceManager.getBitmapData("porta_parede_porta"); 
-  listaImagens['bau_fechado'] = resourceManager.getBitmapData("bau_fechado"); 
-  listaImagens['bau_aberto'] = resourceManager.getBitmapData("bau_aberto"); 
-  listaImagens['bau_fechado_mapa'] = resourceManager.getBitmapData("bau_fechado_mapa"); 
-  listaImagens['parede'] = resourceManager.getBitmapData("parede"); 
-  listaImagens['chao'] = resourceManager.getBitmapData("chao"); 
-  listaImagens['stone_black'] = resourceManager.getBitmapData("stone_black"); 
-  listaImagens['closed_door'] = resourceManager.getBitmapData("closed_door"); 
-  listaImagens['tela'] = resourceManager.getBitmapData("tela"); 
+  listaImagens['parede_corredor_parede'] =  resourceManager.getBitmapData("parede_corredor_parede"); 
+  listaImagens['parede_corredor_porta'] =  resourceManager.getBitmapData("parede_corredor_porta"); 
+  listaImagens['parede_parede_parede'] =  resourceManager.getBitmapData("parede_parede_parede"); 
+  listaImagens['parede_parede_porta'] =  resourceManager.getBitmapData("parede_parede_porta"); 
+  listaImagens['porta_corredor_parede'] =  resourceManager.getBitmapData("porta_corredor_parede"); 
+  listaImagens['porta_corredor_porta'] =  resourceManager.getBitmapData("porta_corredor_porta"); 
+  listaImagens['porta_parede_parede'] =  resourceManager.getBitmapData("porta_parede_parede"); 
+  listaImagens['porta_parede_porta'] =  resourceManager.getBitmapData("porta_parede_porta"); 
+  listaImagens['bau_fechado'] =  resourceManager.getBitmapData("bau_fechado"); 
+  listaImagens['bau_aberto'] =  resourceManager.getBitmapData("bau_aberto"); 
+  listaImagens['bau_fechado_mapa'] =  resourceManager.getBitmapData("bau_fechado_mapa"); 
+  listaImagens['parede'] =  resourceManager.getBitmapData("parede"); 
+  listaImagens['chao'] =  resourceManager.getBitmapData("chao"); 
+  listaImagens['stone_black'] =  resourceManager.getBitmapData("stone_black"); 
+  listaImagens['closed_door'] =  resourceManager.getBitmapData("closed_door"); 
+  listaImagens['tela'] =  resourceManager.getBitmapData("tela"); 
  
   Parede tela = new Parede(listaImagens['tela'], stage, 0, 0, 'tela');
   var m1 = mapa1();
   Mapa mapa = Mapa(m1, listaImagens, stage);
-  mapa.setItem(Armor("Espada de aço bruto", -2, 0, 0, 0, 15));
-  mapa.setItem(Armor("Armadura de aço bruto", 0, 0, 15, 0, -2));
-  mapa.setItem(Armor("Espada de madeira maciça", 0, 0, 0, 2, 5));
-  mapa.setItem(Armor("Armadura de madeira maciça", 0, 0, 5, 0, 0));
+  await mapa.setItem(Armor("Espada de aço bruto", -2, 0, 0, 0, 15));
+  await mapa.setItem(Armor("Armadura de aço bruto", 0, 0, 15, 0, -2));
+  await mapa.setItem(Armor("Espada de madeira maciça", 0, 0, 0, 2, 5));
+  await mapa.setItem(Armor("Armadura de madeira maciça", 0, 0, 5, 0, 0));
   // mapa.setItem(Armor("Poção verde", -2, 0, 0, 0, 15));
   // mapa.setItem(Armor("Poção azul", -2, 0, 0, 0, 15));
   // mapa.setItem(Armor("Poção vermelha", -2, 0, 0, 0, 15));
   // Armor(var descricao, int accuracy, int critical, int defense, int dexterity, int damage);
 
-  mapa.draw(); // Desenha todo o mapa
-  mapa.drawBlack(); // Deixa o mapa escuro
 
+  await mapa.draw(); // Desenha todo o mapa
+  await mapa.drawBlack(); // Deixa o mapa escuro
   Player player = Player(playerData, stage, 752, 64, mapa);
 
   player.mouseCursor = MouseCursor.POINTER;
   FPV fpv = FPV(stage, mapa.mapa, listaImagens);
-
+    var a = Parede(spr, stage, 1000, 500, null);
+    a.parede.onMouseDown.listen(onSpriteSelected);
   Game game = Game(player, mapa, fpv);
 
   // See more examples:
@@ -577,4 +580,31 @@ class Battle {
 makeMatrix(m, n) {
    var x = new List.generate(m, (_) => new List(n));
    return x;
+}
+
+void onSpriteSelected(InputEvent inputEvent) {
+  print("{inputEvent.localX}, {inputEvent.localY}");
+}
+
+class Texto extends DisplayObjectContainer {
+
+  final String text = 
+'Filet mignon leberkas pig pork chop biltong, short loin strip steak turkey brisket ' 
+'venison. Pastrami venison pancetta, leberkas pork chop chicken prosciutto beef ribs '
+'bresaola kielbasa swine biltong capicola. Hamburger beef ribs ball tip drumstick salami '  
+'pig. Capicola pork loin shank, salami chicken hamburger tail. Sirloin spare ribs '
+'ground round cow strip steak prosciutto swine bacon corned beef.';
+
+  Texto() {
+    
+    var textField1 = new TextField();
+    var textFormat1 = new TextFormat('Helvetica,Arial', 14, Color.Green, bold:true, italic:true);
+    textField1.defaultTextFormat = textFormat1;
+    textField1.text = text;
+    textField1.x = 10;
+    textField1.y = 10;
+    textField1.width = 920;
+    textField1.height = 20;
+    addChild(textField1);
+  }
 }

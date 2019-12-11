@@ -3,6 +3,8 @@ import 'dart:html';
 import 'package:stagexl/stagexl.dart';
 import 'dart:math';
 import 'mapa1.dart';
+import 'mapa2.dart';
+import 'mapa3.dart';
 
 const ARROW_LEFT = 37;
 const ARROW_UP = 38;
@@ -40,6 +42,8 @@ Future<Null> main() async {
   resourceManager.addBitmapData("closed_door", "images/dngn_closed_door.png");
   resourceManager.addBitmapData("tela", "images/tela.png");
   resourceManager.addBitmapData("btnTeste", "images/dngn_enter_shop.png");
+  resourceManager.addBitmapData("dragon", "images/shadow_dragon.png");
+  resourceManager.addBitmapData("dragaoFundo", "images/dragao.png");
   await resourceManager.load();
 
   var logoData = resourceManager.getBitmapData("dart");
@@ -69,9 +73,14 @@ Future<Null> main() async {
   listaImagens['stone_black'] =  resourceManager.getBitmapData("stone_black"); 
   listaImagens['closed_door'] =  resourceManager.getBitmapData("closed_door"); 
   listaImagens['tela'] =  resourceManager.getBitmapData("tela"); 
+  listaImagens['dragao'] =  resourceManager.getBitmapData("dragon");
+  listaImagens['dragaoFundo'] =  resourceManager.getBitmapData("dragaoFundo");
  
   Parede tela = new Parede(listaImagens['tela'], stage, 0, 0, 'tela');
-  var m1 = mapa1();
+  var m1 = [];
+  m1.add(mapa1());
+  m1.add(mapa2());
+  m1.add(mapa3());
   Mapa mapa = Mapa(m1, listaImagens, stage);
   await mapa.setItem(Armor("Espada de aço bruto", -2, 0, 0, 0, 15));
   await mapa.setItem(Armor("Armadura de aço bruto", 0, 0, 15, 0, -2));
@@ -89,8 +98,6 @@ Future<Null> main() async {
 
   player.mouseCursor = MouseCursor.POINTER;
   FPV fpv = FPV(stage, mapa.mapa, listaImagens);
-    var a = Parede(spr, stage, 1000, 500, null);
-    a.parede.onMouseDown.listen(onSpriteSelected);
   Game game = Game(player, mapa, fpv);
 
   // See more examples:
@@ -213,13 +220,18 @@ class Game {
     }
     if(moveu){
       this.fpv.setCorredor(posicaoCorredor, player.posicao);
-      if(this.mapa.mapa[player.posicao.x][player.posicao.y] == "B"){
+      if(this.mapa.mapa[Mapa.currentMap][player.posicao.x][player.posicao.y] == "B"){
         this.fpv.setBau(posicaoBau); // mostra bau na tela fpv
         // mostra o que tem no bau
         // escolhe o que tem no bau
-      } else if(this.mapa.mapa[player.posicao.x][player.posicao.y] == "E"){
+      } else if(this.mapa.mapa[Mapa.currentMap][player.posicao.x][player.posicao.y] == "E"){
+         this.fpv.setInimigo(posicaoBau); 
         // mostra inimigo no fpv
         // escolhe entre atacar, fugir ou usar poção
+      }else if(this.mapa.mapa[Mapa.currentMap][player.posicao.x][player.posicao.y] == "D"){
+        print("to na porta");
+        this.passarFase();
+
       }
       this.mapa.removeBlack(Point(player.posicao.x, player.posicao.y));
 
@@ -230,6 +242,15 @@ class Game {
         // se tiver
 
     }
+  }
+  void passarFase(){
+    Mapa.currentMap += 1;
+    player.posicao = Point(1,1);
+    player.x = 752;
+    player.y = 64;
+    mapa.draw();
+    mapa.drawBlack();
+    player.desenha();
   }
 }
 
@@ -250,7 +271,6 @@ class Player extends Sprite{
     this.desenha();
   }
   void desenha(){
-    this.mapa.isWall(this.posicao);
     stage.addChild(this);
   }
 }
@@ -281,6 +301,7 @@ class Bau{
 
 class Mapa {
   var mapa;
+  static var currentMap = 0;
   var imagens;
   Stage stage;
   List baus;
@@ -288,6 +309,7 @@ class Mapa {
   var _mapa = makeMatrix(30, 30);
   Mapa(m, var imagens, Stage s){
     this.mapa = m;
+    print(m);
     this.imagens = imagens;
     this.stage = s;
     this.baus = [];
@@ -303,7 +325,7 @@ class Mapa {
 
   }
   bool isWall(Point p){
-    if(mapa[p.x][p.y] == "X"){
+    if(mapa[currentMap][p.x][p.y] == "X"){
       return true;
     }else{
       return false;
@@ -324,15 +346,19 @@ class Mapa {
     }
   }
   void draw(){
-    for (var i = 0; i < this.mapa.length; i++) {
-      for(var j = 0; j < this.mapa[i].length; j++){
-        if(this.mapa[i][j] == "X"){
+    for (var i = 0; i < this.mapa[currentMap].length; i++) {
+      for(var j = 0; j < this.mapa[currentMap][i].length; j++){
+        if(this.mapa[currentMap][i][j] == "X"){
           _mapa[i][j] = (Parede(imagens['parede'], stage, j*32+720, i*32+32, "mapa"));
         }
-        else if(this.mapa[i][j] == "C" || this.mapa[i][j] == "E"){
+        else if(this.mapa[currentMap][i][j] == "C"){
           _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32+32, "mapa"));
         }
-        else if(this.mapa[i][j] == "B"){
+        else if(this.mapa[currentMap][i][j] == "E"){
+           _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32+32, "mapa"));
+            _mapa[i][j] = (Parede(imagens['dragao'], stage, j*32+720, i*32+32, "mapa"));
+        }
+        else if(this.mapa[currentMap][i][j] == "B"){
           _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32+32, "mapa"));
           _mapa[i][j] = (Parede(imagens['bau_fechado_mapa'], stage, j*32+720, i*32+32, "mapa"));
           this.setBau(Point(i, j));
@@ -341,7 +367,7 @@ class Mapa {
             print(this.baus[k].item2.descricao);  
           }
         }
-        else if(this.mapa[i][j] == "D"){
+        else if(this.mapa[currentMap][i][j] == "D"){
           _mapa[i][j] = (Parede(imagens['chao'], stage, j*32+720, i*32+32, "mapa"));
           _mapa[i][j] = (Parede(imagens['closed_door'], stage, j*32+720, i*32+32, "mapa"));
         }
@@ -349,8 +375,8 @@ class Mapa {
     }
   }
   void drawBlack(){
-    for (var i = 0; i < this.mapa.length; i++) {
-      for(var j = 0; j < this.mapa[i].length; j++){
+    for (var i = 0; i < this.mapa[currentMap].length; i++) {
+      for(var j = 0; j < this.mapa[currentMap][i].length; j++){
         _mapa[i][j] = (Parede(imagens['stone_black'], stage, j*32+720, i*32+32, "escuro"));
       }
     }
@@ -367,8 +393,8 @@ class Mapa {
   }
   void setBau(Point p){
     Random rnd = new Random();
-    var r1 = rnd.nextInt(6);
-    var r2 = rnd.nextInt(6);
+    var r1 = rnd.nextInt(this.itens.length);
+    var r2 = rnd.nextInt(this.itens.length);
     baus.add(new Bau(p, this.itens[r1], this.itens[r2]));
     print("foi");
   }
@@ -398,28 +424,28 @@ class FPV {
     if((p.x >= 14) || (p.x <= 0) || (p.y >= 14) || (p.y <= 0)) {
       print("oi");
     }
-    else if ((this.mapa[p.x-1][p.y] == "X") && (this.mapa[p.x][p.y+1] != "X") && (this.mapa[p.x+1][p.y] == "X")){
+    else if ((this.mapa[Mapa.currentMap][p.x-1][p.y] == "X") && (this.mapa[Mapa.currentMap][p.x][p.y+1] != "X") && (this.mapa[Mapa.currentMap][p.x+1][p.y] == "X")){
       this.corredor = Parede(this.imagens['parede_corredor_parede'], this.stage, posicaoCorredor.x, posicaoCorredor.y, "corredor");
     }
-    else if((this.mapa[p.x-1][p.y] == "X") && (this.mapa[p.x][p.y+1] != "X") && (this.mapa[p.x+1][p.y] != "X")){
+    else if((this.mapa[Mapa.currentMap][p.x-1][p.y] == "X") && (this.mapa[Mapa.currentMap][p.x][p.y+1] != "X") && (this.mapa[Mapa.currentMap][p.x+1][p.y] != "X")){
       this.corredor = Parede(this.imagens['parede_corredor_porta'], this.stage, posicaoCorredor.x, posicaoCorredor.y, "corredor");
     }
-    else if((this.mapa[p.x-1][p.y] == "X") && (this.mapa[p.x][p.y+1] == "X") && (this.mapa[p.x+1][p.y] == "X")){
+    else if((this.mapa[Mapa.currentMap][p.x-1][p.y] == "X") && (this.mapa[Mapa.currentMap][p.x][p.y+1] == "X") && (this.mapa[Mapa.currentMap][p.x+1][p.y] == "X")){
       this.corredor = Parede(this.imagens['parede_parede_parede'], this.stage, posicaoCorredor.x, posicaoCorredor.y, "corredor");
     }
-    else if((this.mapa[p.x-1][p.y] == "X") && (this.mapa[p.x][p.y+1] == "X") && (this.mapa[p.x+1][p.y] != "X")){
+    else if((this.mapa[Mapa.currentMap][p.x-1][p.y] == "X") && (this.mapa[Mapa.currentMap][p.x][p.y+1] == "X") && (this.mapa[Mapa.currentMap][p.x+1][p.y] != "X")){
       this.corredor = Parede(this.imagens['parede_parede_porta'], this.stage, posicaoCorredor.x, posicaoCorredor.y, "corredor");
     }
-    else if((this.mapa[p.x-1][p.y] != "X") && (this.mapa[p.x][p.y+1] != "X") && (this.mapa[p.x+1][p.y] == "X")){
+    else if((this.mapa[Mapa.currentMap][p.x-1][p.y] != "X") && (this.mapa[Mapa.currentMap][p.x][p.y+1] != "X") && (this.mapa[Mapa.currentMap][p.x+1][p.y] == "X")){
       this.corredor = Parede(this.imagens['porta_corredor_parede'], this.stage, posicaoCorredor.x, posicaoCorredor.y, "corredor");
     }
-    else if((this.mapa[p.x-1][p.y] != "X") && (this.mapa[p.x][p.y+1] != "X") && (this.mapa[p.x+1][p.y] != "X")){
+    else if((this.mapa[Mapa.currentMap][p.x-1][p.y] != "X") && (this.mapa[Mapa.currentMap][p.x][p.y+1] != "X") && (this.mapa[Mapa.currentMap][p.x+1][p.y] != "X")){
       this.corredor = Parede(this.imagens['porta_corredor_porta'], this.stage, posicaoCorredor.x, posicaoCorredor.y, "corredor");
     }
-    else if((this.mapa[p.x-1][p.y] != "X") && (this.mapa[p.x][p.y+1] == "X") && (this.mapa[p.x+1][p.y] == "X")){
+    else if((this.mapa[Mapa.currentMap][p.x-1][p.y] != "X") && (this.mapa[Mapa.currentMap][p.x][p.y+1] == "X") && (this.mapa[Mapa.currentMap][p.x+1][p.y] == "X")){
       this.corredor = Parede(this.imagens['porta_parede_parede'], this.stage, posicaoCorredor.x, posicaoCorredor.y, "corredor");
     }
-    else if((this.mapa[p.x-1][p.y] != "X") && (this.mapa[p.x][p.y+1] == "X") && (this.mapa[p.x+1][p.y] != "X")){
+    else if((this.mapa[Mapa.currentMap][p.x-1][p.y] != "X") && (this.mapa[Mapa.currentMap][p.x][p.y+1] == "X") && (this.mapa[Mapa.currentMap][p.x+1][p.y] != "X")){
       this.corredor = Parede(this.imagens['porta_parede_porta'], this.stage, posicaoCorredor.x, posicaoCorredor.y, "corredor");
     }
   }
@@ -431,9 +457,16 @@ class FPV {
     bauFechado.y = posicaoBau.y;
     stage.addChild(bauFechado);
   }
-  // void setInimigo(var data){
-  //   inimigo.addChild(Bitmap (data));
-  // }
+   void setInimigo(Point pos){
+    this.inimigo.addChild(Bitmap (this.imagens['dragaoFundo']));
+    inimigo.width = 300;
+    inimigo.height = 300;
+    inimigo.pivotX = 150;
+    inimigo.pivotY = 150;
+    inimigo.x = pos.x; 
+    inimigo.y = pos.y;
+    stage.addChild(inimigo);
+   }
   // void desenhaBauAberto(Point p){
   //   bauAberto.width = bauAberto.width / 2;
   //   bauAberto.height = bauAberto.height / 2;
